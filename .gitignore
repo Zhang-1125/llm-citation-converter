@@ -1,18 +1,16 @@
-# 1. 屏蔽虚拟环境 (非常大且没必要上传)
+
 .venv/
 venv/
 ENV/
 
-# 2. 屏蔽敏感信息 (包含你的 DeepSeek API Key)
+
 .env
 
-# 3. 屏蔽 PyCharm 的配置文件
+
 .idea/
 
-# 4. 屏蔽 Python 运行产生的缓存
 __pycache__/
 *.pyc
 
-# 5. 屏蔽本地生成的文献结果 (可选)
+
 formatted_citations.txt
-formatted_citations_fixed.txt
