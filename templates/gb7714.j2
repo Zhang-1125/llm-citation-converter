@@ -1,0 +1,68 @@
+{# 1. 处理作者列表：GB7714规定超过3个作者只显示前3个，加"等"或"et al." #}
+{%- if authors and authors|length > 0 -%}
+    {%- if authors|length > 3 -%}
+        {# 取前三个作者，判断第一个作者是否包含英文字母来决定用 'et al.' 还是 '等' #}
+        {%- set is_english = authors[0] | lower | regex_search('[a-z]') -%}
+        {%- set author_text = authors[:3] | join(', ') ~ (', et al' if is_english else ', 等') -%}
+    {%- else -%}
+        {%- set author_text = authors | join(', ') -%}
+    {%- endif -%}
+{%- else -%}
+    {%- set author_text = '(缺省)' -%}
+{%- endif -%}
+
+{# 2. 预处理所有可能存在的字段，使用 default 过滤器，当值为 null 或空字符串时赋予 '(缺省)' #}
+{%- set t_title = title | default('(缺省)', true) -%}
+{%- set t_doc_type = doc_type | default('J', true) -%}
+{%- set t_venue = venue | default('(缺省)', true) -%}
+{%- set t_year = year | default('(缺省)', true) -%}
+{%- set t_volume = volume | default('(缺省)', true) -%}
+{%- set t_issue = issue | default('(缺省)', true) -%}
+{%- set t_pages = pages | default('(缺省)', true) -%}
+{%- set t_location = location | default('(缺省)', true) -%}
+{%- set t_publisher = publisher | default('(缺省)', true) -%}
+{%- set t_doi = doi | default('', true) -%} {# DOI一般不强求缺省提示，这里留空 #}
+{%- set t_url = url | default('(缺省)', true) -%}
+
+{# 3. 根据文献类型进行严格的格式拼装 #}
+{%- if t_doc_type == 'J' -%}
+{# --- 期刊 (Journal) --- #}
+{# 格式：作者. 文章题目[J]. 期刊名, 出版年份, 卷号(期数): 起止页码. #}
+{{ author_text }}. {{ t_title }}[J]. {{ t_venue }}, {{ t_year }}, {{ t_volume }}({{ t_issue }}): {{ t_pages }}.{% if t_doi %} DOI:{{ t_doi }}.{% endif %}
+
+{%- elif t_doc_type == 'C' -%}
+{# --- 会议论文 (Conference) --- #}
+{# 依据 GB/T 7714 最新标准(图5)：作者. 题名[C]//会议名称, 会议年份: 引文页码. #}
+{# 注：部分学校规范(图7)可能要求 [A]...[C] 格式，此处采用图5所示的最严谨国标格式 #}
+{{ author_text }}. {{ t_title }}[C]//{{ t_venue }}, {{ t_year }}: {{ t_pages }}.{% if t_doi %} DOI:{{ t_doi }}.{% endif %}
+
+{%- elif t_doc_type == 'M' -%}
+{# --- 图书/专著 (Monograph) --- #}
+{# 格式(图8)：作者. 书名[M]. 出版地: 出版单位, 出版年份: 起止页码. #}
+{{ author_text }}. {{ t_title }}[M]. {{ t_location }}: {{ t_publisher }}, {{ t_year }}: {{ t_pages }}.
+
+{%- elif t_doc_type == 'D' -%}
+{# --- 学位论文 (Dissertation) --- #}
+{# 格式(图7)：作者. 论文题目[D]. 保存地: 保存单位, 年份. #}
+{{ author_text }}. {{ t_title }}[D]. {{ t_location }}: {{ t_publisher }}, {{ t_year }}.
+
+{%- elif t_doc_type == 'R' -%}
+{# --- 报告 (Report) --- #}
+{# 格式(图7)：作者. 报告题目[R]. 报告地: 报告会主办单位, 报告年份. #}
+{{ author_text }}. {{ t_title }}[R]. {{ t_location }}: {{ t_publisher }}, {{ t_year }}.
+
+{%- elif t_doc_type == 'P' -%}
+{# --- 专利 (Patent) --- #}
+{# 格式(图7)：专利所有者. 专利名称: 专利国别, 专利号[P]. 发布日期. (此处借用location表国别，issue表专利号) #}
+{{ author_text }}. {{ t_title }}: {{ t_location }}, {{ t_issue }}[P]. {{ t_year }}.
+
+{%- elif t_doc_type == 'EB/OL' -%}
+{# --- 电子文献 --- #}
+{# 格式(图8)：作者. 文献题目[EB/OL]. 电子文献可获取地址, [发表或更新日期]. #}
+{{ author_text }}. {{ t_title }}[EB/OL]. {{ t_url }}, [{{ t_year }}].
+
+{%- else -%}
+{# --- 兜底格式 --- #}
+{{ author_text }}. {{ t_title }}[{{ t_doc_type }}]. {{ t_venue }}, {{ t_year }}: {{ t_pages }}.
+
+{%- endif -%}
